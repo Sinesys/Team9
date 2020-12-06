@@ -1,0 +1,208 @@
+<div class="modal" id="day-info">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header d-flex justify-content-between bg-light">
+                <h4 class="modal-title">Day details</h4>
+                <div>
+                    <span class="h4 mr-3" id="modal-day-of-week"></span>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+            </div>
+
+            <div class="modal-body px-5 py-4">
+
+                <div class="row mb-4">
+                    <ul class="list-group w-100">
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Availability interval sufficient to complete the task.
+                            <span class="btn btn-success">&#9;</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            Availability interval not sufficient to complete the task.
+                            <span class="btn btn-warning">&#9;</span>
+                        </li>
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                            No-availability interval.
+                            <span class="btn btn-danger">&#9;</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <p>Click on the green intervals to set the activity time:</p>
+
+                <div class="bg-light p-3 rounded-lg">
+                    <div class="d-flex justify-content-between">
+                        <div>08:00</div>
+                        <div>09:00</div>
+                        <div>10:00</div>
+                        <div>11:00</div>
+                        <div>12:00</div>
+                        <div>13:00</div>
+                        <div>14:00</div>
+                        <div>15:00</div>
+                        <div>16:00</div>
+                        <div>17:00</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between px-3 mb-1">
+                        <div>|</div>
+                        <div>|</div>
+                        <div>|</div>
+                        <div>|</div>
+                        <div>|</div>
+                        <div>|</div>
+                        <div>|</div>
+                        <div>|</div>
+                        <div>|</div>
+                        <div>|</div>
+                    </div>
+                    <div class="px-3">
+                        <div class="progress bg-danger" id="progress-bar"></div>
+                    </div>
+                    <div class="px-2">
+                        <input type="text" class="js-range-slider" name="my_range" value="" />
+                    </div>
+                </div>
+
+                <div class="my-3">
+                    <strong>Estimated intervention time: </strong>
+                    <span id="modal-estimated-time"></span> min.
+                </div>
+
+                <div class="row mt-4 mb-2">
+                    <div class="col">
+                        <div class="form-group form-inline d-flex justify-content-center">
+                            <label for="assignment-start">From: &nbsp;</label>
+                            <input class="form-control" type="time" disabled style="background-color:white" id="assignment-start" min="08:00" max="17:00">
+                        </div>
+                    </div>
+                    <div class="col">
+                        <div class="form-group form-inline d-flex justify-content-center">
+                            <label for="assignment-end">To: &nbsp;</label>
+                            <input class="form-control" type="time" disabled style="background-color:white" id="assignment-end" min="08:00" max="17:00">
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="modal-footer" id="assignment-complete"></div>
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $('#day-info').on('show.bs.modal', function(e) {
+        day = String(e.relatedTarget.classList[1]);
+        $('#modal-day-of-week').html(day[0].toUpperCase() + day.slice(1));
+
+        var url = new URL(window.location.href);
+        var scheduled = parseInt(url.searchParams.get("estimatedtime"));
+
+        $('#modal-estimated-time').html(scheduled);
+
+        var availability = [
+            ["08:00", "10:00"],
+            ["12:00", "15:15"],
+            ["16:00", "16:30"]
+        ];
+
+        var last_right = null;
+
+        $.each(availability, function(index, obj) {
+
+            let left = obj[0].split(":");
+            left = parseInt(left[0]) * 4 + parseInt(left[1]) / 15;
+            let right = obj[1].split(":");
+            right = parseInt(right[0]) * 4 + parseInt(right[1]) / 15;
+
+            let interval = (right - left);
+            let perc_width = interval * 2.77;
+            let color = 'bg-warning';
+            let onclick = '';
+
+            if (interval >= (scheduled / 15)) {
+                color = 'bg-success';
+                onclick = 'onclick="updateSlider(this, ' + scheduled + ')"';
+            }
+
+            if (last_right != null) {
+                let interval = (left - last_right);
+                let perc_width = interval * 2.77;
+                let bar = '<div class="progress-bar bg-danger" role="progressbar" style="width:' +
+                    perc_width + '%" aria-valuemin="0" aria-valuemax="96"></div>';
+                $('#progress-bar').append(bar);
+            }
+
+            let bar = '<div class="progress-bar ' + color + '" role="progressbar" ' + onclick +
+                ' style="width:' + perc_width + '%" aria-valuemin="' + left + '" aria-valuemax="' +
+                right + '"></div>';
+            $('#progress-bar').append(bar)
+            last_right = right;
+        });
+        var url = new URL(window.location.href);
+        var id = url.searchParams.get("id");
+        $('#assignment-complete').html('<button type="button" class="btn btn-primary" onclick="validateAssignmentAvailability(\'' + e.relatedTarget.getAttribute("rel") + '\', \'' + id + '\')">Assign</button>');
+
+    });
+
+    $('#day-info').on('hide.bs.modal', function(e) {
+        $('#progress-bar').html('');
+
+        var slider = $(".js-range-slider").data("ionRangeSlider");
+        slider.update({
+            disable: true,
+            from: 32,
+            to: 68,
+            from_min: 32,
+            to_max: 68,
+            max_interval: 36
+        });
+    });
+
+    $("#sidebar-toggle").click(function(e) {
+        e.preventDefault();
+        $("#wrapper").toggleClass("toggled");
+    });
+
+    var slider = $(".js-range-slider");
+
+    slider.ionRangeSlider({
+        type: "double",
+        min: 32,
+        max: 68,
+        step: 1,
+        from: 32,
+        to: 68,
+        drag_interval: true,
+        hide_min_max: true,
+        hide_from_to: true,
+        disable: true
+    });
+
+    slider.on("change", function() {
+        var from = parseInt($(this).data('from'));
+        var to = parseInt($(this).data('to'));
+        from = minutesToTime(from * 15);
+        to = minutesToTime(to * 15);
+        $('#assignment-start').val(from);
+        $('#assignment-end').val(to);
+    });
+
+    function updateSlider(elem, estimated) {
+        var my_range = $(".js-range-slider").data("ionRangeSlider");
+
+        let from_val = parseInt(elem.getAttribute("aria-valuemin"))
+        my_range.update({
+            disable: false,
+            from: from_val,
+            to: from_val + (estimated / 15),
+            from_min: from_val,
+            to_max: parseInt(elem.getAttribute("aria-valuemax")),
+            min_interval: estimated / 15,
+            max_interval: estimated / 15
+        });
+    }
+</script>

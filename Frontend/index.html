@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <title>Homepage</title>
+
+    <!-- METADATA -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- ICON -->
+    <link href="static/imgs/icon.png" rel="icon">
+
+    <!-- BOOTSTRAP -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <!-- FONT AWESOME ICONS -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+
+    <!-- CUSTOM JS -->
+    <script src="static/js/global.js"></script>
+    <script src="static/js/access_management.js"></script>
+
+    <!-- CUSTOM CSS -->
+    <link rel="stylesheet" href="static/css/custom.css">
+</head>
+
+<body>
+    <div class="container-fluid">
+
+        <div class="modal show" style="display: block; background-image: url(static/imgs/bg.gif); background-size: cover;">
+            <div class="modal-dialog modal-dialog-centered" role="document">
+                <div class="modal-content" style="background-color: #fefefe;">
+                    <div class="modal-body px-3 py-5">
+                        <div class="row container-fluid d-flex justify-content-center p-0 m-0">
+                            <div class="col-lg-10 col-sm-10 col-12 py-3 px-5" id="access-wrapper">
+
+                                <template id="access-row">
+                                    <div class="p-5 my-auto" style="border-radius: 20px; background-color: #E1F3FF;">
+                                        <div class="h2 text-center">Hi {user}!</div>
+                                        <div class="h6 text-center">You are already authenticated</div>
+                                        <div class="row container-fluid d-flex justify-content-center p-0 m-0 mt-4">
+                                            <button class="btn btn-primary mr-4" id="already-logged-button">Enter</button>                         
+                                            <button class="btn btn-danger" onclick="logoutUser()">Logout</a>
+                                        </div> 
+                                    </div>
+                                </template>
+
+                                <div class="row container-fluid d-flex justify-content-center p-0 m-0 mb-4">
+                                    <div class="col-12">
+                                        <img src="static/imgs/logo.gif" style="width: 100%">
+                                    </div>
+                                </div>
+
+                                <div id="login-form">
+                                    <div class="input-group mb-3">
+                                        <input type="text" class="form-control" placeholder="User ID" id="id" name="id" maxlength="15">
+                                    </div>
+                                    <div class="input-group mb-3">
+                                        <input type="password" class="form-control" placeholder="Password" id="password" name="password" maxlength="50">
+                                    </div>
+                                    <div class="row container-fluid d-flex justify-content-center p-0 m-0 mb-3">
+                                        <button type="button" class="btn btn-primary" id="login" onclick="validateLogin('id','password')">Login</button>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+<script type="text/javascript">
+    if (localStorage.length != 0) {
+
+        var container = $('#access-wrapper');
+        var access_row = $("#access-row").html();
+
+        let row = access_row;
+        row = row.replace(/{user}/ig, localStorage.getItem('user').toUpperCase());
+        container.html(row);
+
+        var role = localStorage.getItem('role');
+        var button = $('#already-logged-button');
+        if (role == 'ADM')
+            button.attr('onclick', 'window.location.assign("users_list.php")');
+        else if (role == 'PLN')
+            button.attr('onclick', 'window.location.assign("activities_list.php")');
+    }
+
+    var input = document.getElementById("password");
+    input.addEventListener("keyup", function(event) {
+        if (event.keyCode == 13) {
+            document.getElementById("login").click();
+        }
+    })
+</script>
+
+</html>

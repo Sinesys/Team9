@@ -1,0 +1,55 @@
+<div class="modal" id="skill-info">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header d-flex justify-content-between bg-light">
+                <h4 class="modal-title">Skill details</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body p-5">
+                <ul class="list-group list-group-flush border" id="detail-skills" style="max-height:50vh; overflow-y: auto;">
+                    <template id="skill-row">
+                        <li class="list-group-item">
+                            <div class="d-flex justify-content-between">
+                                <div>{skill}</div>
+                                <div class="custom-control custom-checkbox">
+                                    <input type="checkbox" class="custom-control-input skill-checkbox"
+                                        name="{skill}">
+                                    <label class="custom-control-label"></label>
+                                </div>
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $('#skill-info').on('show.bs.modal', function(e) {
+        var button = e.relatedTarget;
+        var maintainer_id = button.getAttribute('rel');
+
+        var options = {
+            url: API_END_POINT + '/maintainers/' + maintainer_id,
+            type: 'GET',
+            headers: {
+                'Authorization': localStorage.getItem('token')
+            }
+        }
+        var url = new URL(window.location.href);
+        var skills = url.searchParams.get("skills[]").split(",");
+
+        $.ajax(options).done(skillsSatisfiedSuccess).fail(skillsSatisfiedFailure);
+
+    });
+
+    $('#skill-info').on('hide.bs.modal', function(e) {
+        $(".skill-checkbox").each(function() {
+            $(this).prop('checked', false);
+        })
+    });
+</script>

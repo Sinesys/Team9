@@ -1,0 +1,84 @@
+<div class="modal" id="activity-info">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header d-flex justify-content-between bg-light">
+                <h4 class="modal-title"><span id="detail-activityid"></span></h4>
+                <div>
+                    <span class="modal-title h4">Week <span id="detail-week"></span></span>
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                </div>
+            </div>
+
+            <div class="modal-body">
+                <div class="row px-3">
+                    <div class="col">
+                        <div class="row"><strong>Area</strong></div>
+                        <div class="row"><span id="detail-area"></span></div>
+                    </div>
+                    <div class="col">
+                        <div class="row"><strong class="mx-auto">Estimated intervention time</strong></div>
+                        <div class="row"><span class="ml-auto" id="detail-estimated"></span><span class="mr-auto">&nbsp;min.<span></div>
+                    </div>
+                    <div class="col">
+                        <div class="row"><strong class="ml-auto">Typology</strong></div>
+                        <div class="row"><span class="ml-auto" id="detail-typology"></span></div>
+                    </div>
+
+                </div>
+                <hr>
+                <div class="row d-flex justify-content-between">
+                    <div class="col form-group">
+                        <label for="detail-description"><strong>Activity description</strong></label>
+                        <textarea class="form-control" id="detail-description" rows="3" readonly style="height: 25vh; resize:none; background-color:white;"></textarea>
+                    </div>
+                    <div class="col form-group">
+                        <label for="detail-competences"><strong>Skills needed</strong></label>
+                        <ul class="list-group list-group-flush" id="detail-competences" style="max-height: 25vh; overflow-y: scroll;"></ul>
+                    </div>
+                </div>
+                <hr>
+                <div class="form-group">
+                    <label for="detail-workspacenotes"><strong>Workspace Notes</strong></label>
+                    <textarea class="form-control" id="detail-workspacenotes" rows="3" style="resize:none"></textarea>
+                </div>
+            </div>
+
+            <div class="modal-footer d-flex justify-content-between">
+                <div>
+                    <button class="btn btn-danger btn-lg" title="SMP PDF"><i class="far fa-file-pdf"></i></button>
+                </div>
+                <div>
+                    <button class="btn btn-primary btn-lg" title="Edit" id="detail-button-edit"><i class="fas fa-edit"></i></button>
+                    <button class="btn btn-lg btn-success" id="detail-button-assign" title="Assign activity"></button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $('#activity-info').on('show.bs.modal', function(e) {
+        var button = e.relatedTarget;
+        var activity = button.getAttribute('rel');
+        var week = button.parentElement.parentElement.getAttribute('rel');
+
+        $('#detail-week').html(week)
+
+        var options = {
+            url: API_END_POINT + '/activities/' + activity,
+            type: 'GET',
+            headers: {
+                'Authorization': localStorage.getItem('token')
+            }
+        }
+
+        $.ajax(options).done(activityDetailSuccess).fail(activityDetailFailure);
+    });
+
+    $('#activity-info').on('hide.bs.modal', function(e) {
+        $('#detail-workspacenotes').val('');
+        $('#detail-competences').html('');
+    });
+</script>
