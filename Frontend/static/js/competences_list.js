@@ -40,7 +40,7 @@ $.ajax(options)
         $('#competences-table-master').dataTable({
             dom: '<"row mb-3" <"col" l><"col" f>>t<i><p>',
             order: [
-                [0, 'asc']
+                [1, 'asc']
             ],
             responsive: true,
         });

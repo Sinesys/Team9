@@ -47,7 +47,7 @@
                 'Typologies List': 'typologies_list.php',
                 'Materials List': 'materials_list.php',
                 'Procedures List': 'procedures_list.php',
-                'Competences List': 'competences_list.html',
+                'Competences List': 'competences_list.php',
                 'Sites List': 'sites_list.php'
             }
 
@@ -66,7 +66,6 @@
                             <img src="static/imgs/typologies.jpeg" class="card-img-top" alt="Typologies" style="height: 250px">
                             <div class="card-body bg-light text-center">
                                 <h5 class="card-title">Typologies</h5>
-                                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
                                 <a href="typologies_list.php" class="btn btn-primary stretched-link">Go to Typologies</a>
                             </div>
                         </div>
@@ -76,7 +75,6 @@
                             <img src="static/imgs/materials.jpeg" class="card-img-top" alt="Materials" style="height: 250px">
                             <div class="card-body bg-light text-center">
                                 <h5 class="card-title">Materials</h5>
-                                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
                                 <a href="materials_list.php" class="btn btn-primary stretched-link">Go to Materials</a>
                             </div>
                         </div>
@@ -86,7 +84,6 @@
                             <img src="static/imgs/procedures.jpeg" class="card-img-top" alt="Procedures" style="height: 250px">
                             <div class="card-body bg-light text-center">
                                 <h5 class="card-title">Procedures</h5>
-                                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
                                 <a href="procedures_list.php" class="btn btn-primary stretched-link">Go to Procedures</a>
                             </div>
                         </div>
@@ -96,7 +93,6 @@
                             <img src="static/imgs/competences.jpeg" class="card-img-top" alt="Competences" style="height: 250px">
                             <div class="card-body bg-light text-center">
                                 <h5 class="card-title">Competences</h5>
-                                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
                                 <a href="competences_list.php" class="btn btn-primary stretched-link">Go to Competences</a>
                             </div>
                         </div>
@@ -106,7 +102,6 @@
                             <img src="static/imgs/sities.jpeg" class="card-img-top" alt="Sities" style="height: 250px">
                             <div class="card-body bg-light text-center">
                                 <h5 class="card-title">Sites</h5>
-                                <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's content.</p>
                                 <a href="sites_list.php" class="btn btn-primary stretched-link">Go to Sites</a>
                             </div>
                         </div>

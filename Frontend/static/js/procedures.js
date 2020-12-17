@@ -115,9 +115,9 @@ function procedureUpdate() {
             }
         }
     }
-    var inputFile = $("#smpFile");
+    var inputFile = $("#smpFile")[0];
     if (inputFile !== undefined)
-        inputFile = inputFile[0].files[0];
+        inputFile = inputFile.files[0];
 
     $.ajax(options)
         .done(function() {

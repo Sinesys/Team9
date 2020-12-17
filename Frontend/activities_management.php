@@ -108,7 +108,7 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text"><i class="fas fa-calendar-day"></i></span>
                                 </div>
-                                <input type="number" class="form-control" placeholder="Insert estimated time" id="estimatedtime" name="estimatedtime" min="15" step="15" value="15">
+                                <input type="number" class="form-control" placeholder="Insert estimated time" id="estimatedtime" name="estimatedtime" min="15" max="525" step="15" value="15">
                             </div>
 
                             <label for="interruptible">Interruptible</label>

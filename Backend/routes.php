@@ -152,7 +152,7 @@ $auth_ADM_PLN_DBL = $api->middleware('auth_ADM_PLN_DBL', function () use ($dbinf
 /* Registring the routes */
 
 $api->get('/', function () {
-    echo "API MOPP UPKEEP";
+    return Response::makeJSONResponse(200, 'API MOPP Upkeep');
 });
 
 

@@ -32,7 +32,11 @@ There are the common SCRUM artifacts: user stories file, product backlog and two
 * a file, "_Architecture.pdf_", that is a short document describing the software architecture; 
 * a EA document "_Design.eapx_" in which there is the global architecture model, the server architecture model, the database model and the server execution model;
 * "_Final Release.pdf_", a presentation of the project, containing both the process and the product. 
-* "_TestCase_", a file that documents some of the test made.
+* "_TestCase.pdf_", a file that documents some of the test made.
+* "_SecondDelivery.pdf_", a file that describes the first sprint.
+* "_ThirdDelivery.pdf_", a file that describes the second sprint.
+* "_FinalRelease.pdf_", a presentation of the project describing both the product and the process.
+* There is also a folder, _"Videos"_, containing some video that shows how the application works.
 
 ### Testing
 The _"Testing"_ folder contains the code related to the testing carried out on our application. In this folder, there are 2 sub-folders:
