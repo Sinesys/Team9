@@ -58,7 +58,7 @@
                         <div>|</div>
                     </div>
                     <div class="px-3">
-                        <div class="progress bg-danger" id="progress-bar"></div>
+                        <div class="progress" id="progress-bar"></div>
                     </div>
                     <div class="px-2">
                         <input type="text" class="js-range-slider" name="my_range" value="" />
@@ -95,56 +95,64 @@
 
 <script type="text/javascript">
     $('#day-info').on('show.bs.modal', function(e) {
-        day = String(e.relatedTarget.classList[1]);
+        var week = {
+            'monday': 0,
+            'tuesday': 1,
+            'wednesday': 2,
+            'thursday': 3,
+            'friday': 4,
+            'saturday': 5,
+            'sunday': 6
+        }
+
+        var maintainer = e.relatedTarget.name;
+        var day = String(e.relatedTarget.id).split('-')[1];
+        var dayNumber = week[day];
         $('#modal-day-of-week').html(day[0].toUpperCase() + day.slice(1));
 
         var url = new URL(window.location.href);
-        var scheduled = parseInt(url.searchParams.get("estimatedtime"));
+        var estimated = parseInt(sessionStorage.getItem('estimated'));
+        $('#modal-estimated-time').html(estimated);
 
-        $('#modal-estimated-time').html(scheduled);
+        var unavailabilities = JSON.parse(sessionStorage.getItem('unavailabilities'));
+        var unavailability = []
+        var mant_unavail = unavailabilities[maintainer][dayNumber]
+        if (mant_unavail !== undefined)
+            unavailability = mant_unavail;
 
-        var availability = [
-            ["08:00", "10:00"],
-            ["12:00", "15:15"],
-            ["16:00", "16:30"]
-        ];
-
-        var last_right = null;
-
-        $.each(availability, function(index, obj) {
-
-            let left = obj[0].split(":");
+        var scheduling = [];
+        var last_value = 32;
+        $.each(unavailability, function(index, obj) {
+            let left = obj['start'].split(":");
             left = parseInt(left[0]) * 4 + parseInt(left[1]) / 15;
-            let right = obj[1].split(":");
+            let right = obj['end'].split(":");
             right = parseInt(right[0]) * 4 + parseInt(right[1]) / 15;
-
-            let interval = (right - left);
-            let perc_width = interval * 2.77;
-            let color = 'bg-warning';
-            let onclick = '';
-
-            if (interval >= (scheduled / 15)) {
-                color = 'bg-success';
-                onclick = 'onclick="updateSlider(this, ' + scheduled + ')"';
-            }
-
-            if (last_right != null) {
-                let interval = (left - last_right);
-                let perc_width = interval * 2.77;
-                let bar = '<div class="progress-bar bg-danger" role="progressbar" style="width:' +
-                    perc_width + '%" aria-valuemin="0" aria-valuemax="96"></div>';
-                $('#progress-bar').append(bar);
-            }
-
-            let bar = '<div class="progress-bar ' + color + '" role="progressbar" ' + onclick +
-                ' style="width:' + perc_width + '%" aria-valuemin="' + left + '" aria-valuemax="' +
-                right + '"></div>';
-            $('#progress-bar').append(bar)
-            last_right = right;
+            if (last_value < left)
+                scheduling.push([true, left - last_value, last_value, left])
+            scheduling.push([false, right - left, left, right])
+            last_value = right;
         });
+        if (last_value < 68)
+            scheduling.push([true, 68 - last_value, last_value, 68]);
+
+        $.each(scheduling, function(index, obj) {
+            let color = 'bg-warning'
+            let onclick = '';
+            if (obj[0] == false) {
+                color = 'bg-danger'
+            } else if (obj[1] >= (estimated / 15)) {
+                color = 'bg-success'
+                onclick = 'onclick="updateSlider(this, ' + estimated + ')"';
+            }
+            let bar = '<div class="progress-bar ' + color + '" role="progressbar" ' + onclick +
+                ' style="width:' + obj[1] * 2.77 + '%" aria-valuemin="' + obj[2] + '" aria-valuemax="' +
+                obj[3] + '"></div>';
+            $('#progress-bar').append(bar)
+        })
+
         var url = new URL(window.location.href);
         var id = url.searchParams.get("id");
-        $('#assignment-complete').html('<button type="button" class="btn btn-primary" onclick="validateAssignmentAvailability(\'' + e.relatedTarget.getAttribute("rel") + '\', \'' + id + '\')">Assign</button>');
+        $('#assignment-complete').html('<button type="button" class="btn btn-primary" onclick="activityAssignment(\'' + e.relatedTarget.getAttribute("name") + '\', \'' + id + '\', ' + dayNumber + ')">Assign</button>');
 
     });
 

@@ -2,7 +2,7 @@
 <html lang="en">
 
 <head>
-    <title>Users - Management</title>
+    <title>Admin - Users Management</title>
 
     <!-- METADATA -->
     <meta charset="utf-8">
@@ -17,29 +17,26 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
-    <!-- CUSTOM JS -->
-    <script src="static/js/global.js"></script>
-    <script src="static/js/registration_management.js"></script>
-    <script src="static/js/access_management.js"></script>
-    <script src="static/js/users_management.js"></script>
-    <script src="static/js/activities_management.js"></script>
-    <script src="static/js/competences_management.js"></script>
-    <script src="static/js/functionalities.js"></script>
-    <script src="static/js/validations.js"></script>
-
     <!-- FONT AWESOME ICONS -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+
+    <!-- SWEET ALERT -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script> 
+	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4@4.0.1/bootstrap-4.min.css">
+
+    <!-- CUSTOM JS -->
+    <script src="static/js/global.js"></script>
+    <script src="static/js/access_management.js"></script>
+    <script src="static/js/users.js"></script>
+    <script src="static/js/utilities.js"></script>
+    <script src="static/js/fire_alert.js"></script>
 
     <!-- CUSTOM CSS -->
     <link rel="stylesheet" href="static/css/custom.css">
     <link href="static/css/simple-sidebar.css" rel="stylesheet">
 
     <script type="text/javascript">
-        if(localStorage.getItem('token') === null){
-            alert('You are not authenticated, please login');
-            window.location.assign('index.html');
-        }
-        else if(localStorage.getItem('role') != 'ADM')
+        if(localStorage.getItem('token') === null || localStorage.getItem('role') != 'ADM')
             window.location.assign('not_authorized.html');
     </script>
 
@@ -51,21 +48,9 @@
 
         <?php include_once 'sidebar.html' ?>
 
-        <script type="text/javascript">
-            
-            var links = {
-                'Users List' : 'users_list.php',
-                'User Registration' : 'users_management.php',
-                'Users Access Log' : 'users_access_log.php'
-            }
-            
-            populateSidebar(links);
-            
-        </script>
-
         <div class="container-fluid m-0 p-0">
 
-            <?php include_once 'navbar.php' ?>
+            <?php include_once 'navbar.html' ?>
 
             <div class="container-fluid p-5">
 
@@ -98,7 +83,7 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text"><i class="fas fa-user-circle"></i></span>
                                 </div>
-                                <input type="text" class="form-control" placeholder="Insert name" id="name" name="name" maxlength="20" onkeyup="isRegexMatch(this, /^[A-Za-z]+$/)">
+                                <input type="text" class="form-control" placeholder="Insert name" id="name" name="name" maxlength="20" onkeyup="isRegexMatch(this, /^[A-Za-z]{1,20}$/)">
                             </div>
 
                             <label for="surname">Surname:</label>
@@ -106,7 +91,7 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text"><i class="fas fa-address-book"></i></span>
                                 </div>
-                                <input type="text" class="form-control" placeholder="Insert surname" id="surname" name="surname" maxlength="30" onkeyup="isRegexMatch(this, /^[A-Za-z\']+$/)">
+                                <input type="text" class="form-control" placeholder="Insert surname" id="surname" name="surname" maxlength="30" onkeyup="isRegexMatch(this, /^[A-Za-z]{1,30}$/)">
                             </div>
 
                             <label for="birthdate">Birth Date:</label>
@@ -122,7 +107,7 @@
                                 <div class="input-group-prepend">
                                     <span class="input-group-text"><i class="fas fa-phone"></i></span>
                                 </div>
-                                <input type="text" class="form-control" placeholder="Insert phone number" id="phonenumber" name="phonenumber" maxlength="15" onkeyup="isRegexMatch(this, /^[0-9]+$/)">
+                                <input type="text" class="form-control" placeholder="Insert phone number" id="phonenumber" name="phonenumber" maxlength="15" onkeyup="isRegexMatch(this, /^[0-9]{1,15}$/)">
                             </div>
 
                             <label for="email">Email: </label>
@@ -149,20 +134,13 @@
                             <div id="competences-wrapper">
 
                                 <label for="competences">Competences: </label>
-                                <div class="input-group mb-3" id="competences">
-                                    <template id="competence-row">
-                                        <div class="custom-control custom-checkbox mb-3 mr-4">
-                                            <input type="checkbox" class="custom-control-input" id="competence{index}" name="competence{index}" value="{competence}">
-                                            <label class="custom-control-label" for="competence{index}">{competence}</label>
-                                        </div>
-                                    </template>
-                                </div>                                                     
+                                <div class="input-group mb-3" id="competences"></div>                                                     
 
                             </div>
 
                             <div class="input-group mt-5 d-flex justify-content-center">
                                 <button type="button" class="btn btn-danger mr-3" onclick="window.location.assign('users_list.php')">Cancel</button>
-                                <button type="button" id="send-update-button" class="btn btn-primary" onclick="validateRegistration('registration-form')">Register</button>
+                                <button type="button" id="send-update-button" class="btn btn-primary" onclick="userRegister()">Register</button>
                             </div>
 
                         </div>
@@ -173,48 +151,14 @@
         </div>
     </div>
 
-    <script type="text/javascript">
+    <template id="competence-row">
+        <div class="custom-control custom-checkbox mb-3 mr-4">
+            <input type="checkbox" class="custom-control-input" id="competence{index}" name="competence{index}" value="{competenceid}">
+            <label class="custom-control-label" for="competence{index}">{competence}</label>
+        </div>
+    </template>
 
-        $("#sidebar-toggle").click(function(e) {
-            e.preventDefault();
-            $("#wrapper").toggleClass("toggled");
-        });
-
-        validateBirthDate();
-
-        var options = {
-            url: API_END_POINT + '/competences',
-            type: 'GET',
-            async: false,
-            headers: {
-                'Authorization': localStorage.getItem('token')
-            }
-        }
-        $.ajax(options).done(competencesSuccess).fail(competencesFailure);
-
-        var url = new URL(window.location.href);
-        var update = url.searchParams.get("update");
-        var id = url.searchParams.get("id");
-
-        if (update == 'true') {
-
-            var options = {
-                url: API_END_POINT + '/users/' + id,
-                type: 'GET',
-                headers: {
-                    'Authorization': localStorage.getItem('token')
-                }
-            }
-    
-            $.ajax(options).done(userInfoSuccess).fail(userInfoFailure);
-            $('#userid').attr('readonly', true);
-            $('#password').attr('placeholder', 'Leave blank if you don\'t want to change the password');
-            $('#role').attr('disabled', true);
-            $('.card-header span[class="h2"]').html('Update User');
-            $('#send-update-button').attr('onclick', 'updateUser("registration-form")').html('Update');
-        }
-
-    </script>
+    <script type="text/javascript" src="static/js/users_management.js"></script>
 
 </body>
 

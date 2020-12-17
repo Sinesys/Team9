@@ -1,0 +1,98 @@
+<div class="modal fade" id="sites-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h4 class="modal-title" id="site-modal-title"></h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="site-form">
+
+                    <label for="siteid">ID:</label>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fab fa-slack-hash"></i></span>
+                        </div>
+                        <input type="text" class="form-control" placeholder="Insert univoc ID" id="siteid" name="siteid" maxlength="20">
+                    </div>
+
+                    <label for="area">Area:</label>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-building"></i></span>
+                        </div>
+                        <input type="text" class="form-control" placeholder="Insert area" id="area" name="area" maxlength="50">
+                    </div>
+
+                    <label for="department">Department:</label>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-warehouse"></i></span>
+                        </div>
+                        <input type="text" class="form-control" placeholder="Insert department" id="department" name="department" maxlength="50">
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" id="site-insert-update" class="btn btn-primary" data-dismiss="modal">Insert</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $('#sites-modal').on('show.bs.modal', function(e) {
+        var button = e.relatedTarget;
+        var siteid = button.getAttribute('name');
+        var action = button.getAttribute('id').split('-')[0];
+        $('input[id="siteid"]').attr('disabled', false);
+        $('#site-modal-title').html('Insert site');
+        $('#site-insert-update').html('Insert').attr('onclick', 'siteInsert()');
+
+
+        if (action == 'modify') {
+            $('input[id="siteid"]').attr('disabled', true);
+            $('#site-modal-title').html('Update site');
+            $('#site-insert-update').html('Update').attr('onclick', 'siteUpdate()');
+
+            var options = {
+                url: API_END_POINT + '/sites/' + siteid,
+                type: 'GET',
+                headers: {
+                    'Authorization': localStorage.getItem('token'),
+                    'Content-Type': 'application/json'
+                },
+                statusCode: {
+                    401: function() {
+                        fireAlertError('The session has expired, you need to login again!', logout);
+                    }
+                }
+            };
+
+            $.ajax(options)
+                .done(function(data) {
+                    $.each(data, function(key, value) {
+                        $('input[id="' + key + '"]').val(value);
+                    });
+                })
+                .fail(function() {
+                    fireAlertError('Error in loading site info!', function() {
+                        window.location.assign('sites_list.php');
+                    });
+                });
+        }
+    })
+
+    $('#sites-modal').on('hide.bs.modal', function(e) {
+        $('#site-form input').each(function() {
+            $(this).val('');
+        });
+    })
+</script>

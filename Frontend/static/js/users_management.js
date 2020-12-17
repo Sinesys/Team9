@@ -1,174 +1,116 @@
-/* -------------------- USERS UPDATE -------------------- */
+/* -----------POPULATE THE SIDEBAR--------------
+-----------according to the user role-----------*/
+var links = {
+    'Users List': 'users_list.php',
+    'User Registration': 'users_management.php',
+    'Users Access Log': 'users_access_log.php',
+    'Procedures List': 'procedures_list.php'
+}
 
-function updateUser(form) {
-    var json = {};
+populateSidebar(links);
 
-    $('#' + form + ' input:not([type="checkbox"]), #role').each(function() {
-        json[$(this).attr('name')] = $(this).val();
+/* ------------GET MAINTAINERS COMPETENCES---------------
+-----in order to show them in the registration form-------*/
+var options = {
+    url: API_END_POINT + '/competences',
+    type: 'GET',
+    async: false,
+    headers: {
+        'Authorization': localStorage.getItem('token'),
+        'Content-Type': 'application/json'
+    },
+    statusCode: {
+        401: function() {
+            fireAlertError('The session has expired, you need to login again!', logout);
+        }
+    }
+};
+
+$.ajax(options)
+    .done(function(data) {
+        var competences = $('#competences');
+        var competence_row = $("#competence-row").html();
+
+        $.each(data, function(index, obj) {
+            let row = competence_row;
+            row = row.replace(/{index}/ig, index);
+            row = row.replace(/{competence}/ig, obj.name);
+            row = row.replace(/{competenceid}/ig, obj.competenceid);
+            competences.append(row);
+        });
+    }).fail(function() {
+        fireAlertError('Impossible to load competences for the maintainers!', function() {
+            window.location.assign("users_list.php");
+        });
     });
 
-    json['competences'] = [];
-    var competence = $('#competences input:checked').each(function(index) {
-        json['competences'][index] = $(this).val();
-    });
+var url = new URL(window.location.href);
+var update = url.searchParams.get("update");
+var id = url.searchParams.get("id");
+
+/* ------------REFILL THE REGISTRATION FORM---------------
+---in order to show the info and allow the modification---*/
+
+if (update == 'true') {
 
     var options = {
-        url: API_END_POINT + '/users/' + json.userid,
-        type: 'PUT',
+        url: API_END_POINT + '/users/' + id,
+        type: 'GET',
         headers: {
             'Authorization': localStorage.getItem('token'),
             'Content-Type': 'application/json'
         },
-        data: JSON.stringify(json)
-    };
-    $.ajax(options).done(userUpdateSuccess).fail(userUpdateFailure);
-}
-
-function userUpdateSuccess(data) {
-    alert(data.message);
-    window.location.assign('users_list.php');
-}
-
-function userUpdateFailure(data) {
-    if (data.status == 401) {
-        alert('The session has expired, you need to login again!');
-        logoutUser();
-    }
-    alert("Error in updating user info!");
-    window.location.reload();
-}
-
-
-function deleteUser(id) {
-    var ret = confirm('Are you sure you want to delete this user?');
-
-    if (!ret)
-        return
-
-    var options = {
-        url: API_END_POINT + '/users/' + id,
-        type: 'DELETE',
-        headers: {
-            'Authorization': localStorage.getItem('token')
+        statusCode: {
+            401: function() {
+                fireAlertError('The session has expired, you need to login again!', logout);
+            }
         }
     };
 
-    $.ajax(options).done(userDeleteSuccess).fail(userDeleteFailure);
-}
+    $.ajax(options)
+        .done(function(data) {
+            var role = data.role;
+            delete data.role;
 
-function userDeleteSuccess() {
-    alert("User deleted with success!");
-    window.location.assign('users_list.php');
-}
+            var select = $('#role');
+            select[0].selectedIndex = $('#' + role).index();
 
-function userDeleteFailure(data) {
-    if (data.status == 401) {
-        alert('The session has expired, you need to login again!');
-        logoutUser();
-    }
-    alert("Error in deleting user!");
-    window.location.assign("users_list.php");
-}
+            showCompetences(select[0]);
 
-function userInfoSuccess(data) {
-    var role = data.role;
-    delete data.role;
+            if (role == 'MNT') {
+                var competences = data.competences;
+                delete data.competences;
+                $.each(competences, function(index, value) {
+                    $('input[value="' + value.competence + '"]').attr('checked', true);
+                })
+            }
 
-    var select = $('#role');
-    select[0].selectedIndex = $('#' + role).index();
+            $.each(data, function(k, v) {
+                $('#' + k).val(v)
+            });
+        }).fail(function() {
+            fireAlertError('Error in loading user info!', function() {
+                window.history.back();
+            });
+        });
 
-    showCompetences(select[0]);
+    $('#userid').attr('readonly', true);
+    $('#password').attr('placeholder', 'Leave blank if you don\'t want to change the password');
+    $('#role').attr('disabled', true);
+    $('.card-header span[class="h2"]').html('Update User');
+    $('#send-update-button').attr('onclick', 'userUpdate("registration-form")').html('Update');
+} else {
+    /* ---------------VALIDATE BIRTHDATE----------------*/
+    var today = new Date();
+    var dd = String(today.getDate()).padStart(2, '0');
+    var mm = String(today.getMonth() + 1).padStart(2, '0');
+    var yyyy = today.getFullYear();
 
-    if (role == 'MNT') {
-        var competences = data.competences;
-        delete data.competences;
-        $.each(competences, function(index, value) {
-            $('input[value="' + value + '"]').attr('checked', true);
-        })
-    }
+    var max = String(parseInt(yyyy) - 18) + '-' + mm + '-' + dd;
+    var min = String(parseInt(yyyy) - 100) + '-' + mm + '-' + dd;
 
-    $.each(data, function(k, v) {
-        $('#' + k).val(v)
-    });
-}
-
-function userInfoFailure(data) {
-    if (data.status == 401) {
-        alert('The session has expired, you need to login again!');
-        logoutUser();
-    }
-    alert("ERROR!");
-    window.history.back();
-}
-
-function usersListSuccess(data) {
-    var tbody = $('#users-table');
-    var user_row = $("#user-row").html();
-
-    $.each(data, function(index, obj) {
-        let row = user_row;
-        row = row.replace(/{userid}/ig, obj.userid);
-        row = row.replace(/{role}/ig, obj.role);
-        row = row.replace(/{name}/ig, obj.name);
-        row = row.replace(/{surname}/ig, obj.surname);
-        row = row.replace(/{email}/ig, obj.email);
-        row = row.replace(/{phonenumber}/ig, obj.phonenumber);
-        row = row.replace(/{birthdate}/ig, obj.birthdate);
-        tbody.append(row);
-    });
-
-    $('#users-table-master').dataTable({
-        responsive: true,
-        order: [
-            [1, 'asc']
-        ],
-        "columns": [
-            { "className": 'dt-center' },
-            null, null, null, null, null, null, null,
-            { "className": 'dt-center' }
-        ]
-    });
-}
-
-function usersListFailure(data) {
-    if (data.status == 401) {
-        alert('The session has expired, you need to login again!');
-        logoutUser();
-    }
-    alert("Impossibile to show users");
-}
-
-function usersAccessLogSuccess(data) {
-    var tbody = $('#users-log-table');
-    var log_row = $("#log-row").html();
-
-    $.each(data, function(index, obj) {
-        let row = log_row;
-        row = row.replace(/{userid}/ig, obj.userid);
-        row = row.replace(/{accesstime}/ig, obj.accesstime);
-        tbody.append(row);
-    });
-
-    $('#users-log-table-master').dataTable({
-        responsive: true,
-        order: [
-            [1, 'desc']
-        ],
-        dom: '<"row mb-3" <"col" l> <"col d-flex justify-content-center" B> <"col" f>>t<i><p>',
-        buttons: [
-            'excelHtml5',
-            'pdfHtml5'
-        ]
-    });
-
-    $('.buttons-pdf').append('&nbsp;<i class="far fa-file-pdf"></i>').addClass('btn btn-danger ml-2');
-    $('.buttons-excel').append('&nbsp;<i class="far fa-file-excel"></i>').addClass('btn btn-success');
-}
-
-function usersAccessLogFailure(data) {
-    if (data.status == 401) {
-        alert('The session has expired, you need to login again!');
-        logoutUser();
-    }
-    alert("Impossibile to show the accesses log of the users!");
+    var birthDate = $('#birthdate')
+    birthDate.attr('min', min);
+    birthDate.attr('max', max);
+    birthDate.attr('value', max);
 }

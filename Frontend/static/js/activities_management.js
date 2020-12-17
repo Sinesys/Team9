@@ -1,213 +1,247 @@
-function validateInsertActivity(form) {
-    var code = $('#activityid');
-    if (code.val() == '') {
-        alert("The id field can't be blank");
-        return;
-    }
-
-    var week = parseInt($('#scheduledweek').val());
-    if (week < 1 || week > 52) {
-        alert("Insert a week number between 1 and 52");
-        return;
-    }
-
-    if (!isRegexMatch(code[0], /^([0-9]|[a-zA-Z]|_){1,20}$/)) {
-        alert('Activity ID is not valid!');
-        return;
-    }
-
-    sendActivityJSON(form);
+/* -----------POPULATE THE SIDEBAR--------------
+-----------according to the user role-----------*/
+var links = {
+    'Activities List': 'activities_list.php',
+    'Activities Insert': 'activities_management.php',
 }
 
-function sendActivityJSON(form) {
-    var json = {};
+populateSidebar(links);
 
-    $('#' + form + ' input, textarea').each(function() {
-        json[$(this).attr('name')] = $(this).val();
-    });
-
-    var options = {
-        url: API_END_POINT + '/activities',
-        type: 'POST',
-        headers: {
-            'Authorization': localStorage.getItem('token'),
-            'Content-Type': 'application/json'
-        },
-        data: JSON.stringify(json)
-    };
-
-    $.ajax(options).done(activityInsertSuccess).fail(activityInsertFailure);
-}
-
-function activityInsertSuccess() {
-    alert("Activity inserted with success!");
-    window.location.assign('activities_list.php');
-}
-
-function activityInsertFailure(data) {
-    if (data.status == 401) {
-        alert('The session has expired, you need to login again!');
-        logoutUser();
-    }
-
-    alert("Error in inserting activity!");
-    window.location.assign('activities_list.php');
-}
-
-function updateActivity(form) {
-    var json = {};
-
-    var week = parseInt($('#scheduledweek').val());
-    if (week < 1 || week > 52) {
-        alert("Insert a week number between 1 and 52");
-        return;
-    }
-
-    $('#' + form + ' input, textarea').each(function() {
-        json[$(this).attr('name')] = $(this).val();
-    });
-
-    var options = {
-        url: API_END_POINT + '/activities/' + json.activityid,
-        type: 'PUT',
-        headers: {
-            'Authorization': localStorage.getItem('token'),
-            'Content-Type': 'application/json'
-        },
-        data: JSON.stringify(json)
-    };
-
-    $.ajax(options).done(activityUpdateSuccess).fail(activityUpdateFailure);
-}
-
-function activityUpdateSuccess(data) {
-    alert(data.message);
-    window.location.assign('activities_list.php');
-}
-
-function activityUpdateFailure(data) {
-    if (data.status == 401) {
-        alert('The session has expired, you need to login again!');
-        logoutUser();
-    }
-    alert("Error in updating activity info!");
-    window.location.reload();
-}
-
-function deleteActivity(id) {
-    var ret = confirm('Are you sure you want to delete this activity?');
-
-    if (ret) {
-
-        options = {
-            url: API_END_POINT + '/activities/' + id,
-            type: 'DELETE',
-            headers: {
-                'Authorization': localStorage.getItem('token')
-            }
-        };
-
-        $.ajax(options).done(activityDeleteSuccess).fail(activityDeleteFailure);
-    }
-}
-
-function activityDeleteSuccess() {
-    alert("Activity deleted with success!");
-    window.location.assign('activities_list.php');
-}
-
-function activityDeleteFailure(data) {
-    if (data.status == 401) {
-        alert('The session has expired, you need to login again!');
-        logoutUser();
-    }
-    alert("Error in deleting activity!");
-    window.location.assign('activities_list.php');
-}
-
-function activitiesListSuccess(data) {
-    var tbody = $('#activities-table');
-    var activity_row = $("#activity-information-row").html();
-
-    $.each(data, function(index, obj) {
-        let row = activity_row;
-        row = row.replace(/{activityid}/ig, obj.activityid);
-        row = row.replace(/{description}/ig, obj.description);
-        row = row.replace(/{scheduledweek}/ig, obj.scheduledweek);
-        row = row.replace(/{assignedto}/ig, obj.assignedto);
-        tbody.append(row);
-    });
-
-    $('#activities-table-master').dataTable({
-        dom: '<"row mb-3" <"col" l><"col" f>>t<i><p>',
-        order: [
-            [3, 'asc']
-        ],
-        responsive: true,
-        "drawCallback": function(settings) {
-            var api = this.api();
-            var rows = api.rows({ page: 'current' }).nodes();
-            var last = null;
-
-            api.column(3, { page: 'current' }).data().each(function(group, i) {
-                if (last !== group) {
-                    $(rows).eq(i).before('<tr class="group" style="background-color: Gainsboro;"><td class="text-center" colspan="6"><span class="h5">WEEK ' + group + '</span></td></tr>');
-                    last = group;
-                }
-                $(rows).eq(i).attr("rel", group);
-            });
+var options = {
+    url: API_END_POINT + '/materials',
+    type: 'GET',
+    async: false,
+    headers: {
+        'Authorization': localStorage.getItem('token'),
+        'Content-Type': 'application/json'
+    },
+    statusCode: {
+        401: function() {
+            fireAlertError('The session has expired, you need to login again!', logout);
         }
+    }
+};
+
+/* ------------------GET MATERIALS--------------------
+-----in order to show them in the activity form-------*/
+$.ajax(options)
+    .done(function(data) {
+        var select = $('#materials');
+        var material_row = $('#activity-material-row').html();
+
+        $.each(data, function(index, obj) {
+            let row = material_row;
+            row = row.replace(/{materialid}/ig, obj.materialid);
+            row = row.replace(/{material}/ig, obj.name);
+            select.append(row);
+        });
+
+    })
+    .fail(function() {
+        fireAlertError('Error in loading materials!');
     });
-}
 
-function activitiesListFailure(data) {
-    if (data.status == 401) {
-        alert('The session has expired, you need to login again!');
-        logoutUser();
+$('#materials').selectpicker();
+$('button[data-id=materials]').css('background-color', 'white');
+$('.dropdown.bootstrap-select.show-tick').css('flex', '1 1 auto').css('border', '1px solid #ced4da').css('border-radius', '.25rem');
+
+var options = {
+    url: API_END_POINT + '/procedures?verbose=true',
+    type: 'GET',
+    async: false,
+    headers: {
+        'Authorization': localStorage.getItem('token'),
+        'Content-Type': 'application/json'
+    },
+    statusCode: {
+        401: function() {
+            fireAlertError('The session has expired, you need to login again!', logout);
+        }
     }
-    alert("Impossibile to show activities!");
-}
+};
 
-function activityInfoSuccess(data) {
-    $.each(data, function(k, v) {
-        $("#" + k).val(v)
+/* ------------------GET PROCEDURES--------------------
+-----in order to show them in the activity form-------*/
+$.ajax(options)
+    .done(function(data) {
+        var select = $('#procedure');
+        var procedure_row = $('#activity-procedure-row').html();
+
+        var procedureDict = {};
+
+        $.each(data, function(index, obj) {
+            let row = procedure_row;
+            row = row.replace(/{procedureid}/ig, obj.procedureid);
+            select.append(row);
+
+            let procedureInfo = {};
+            procedureInfo['description'] = obj.description;
+            procedureInfo['competencesrequired'] = {};
+            $.each(obj.competencesrequired, function(index, competence) {
+                procedureInfo['competencesrequired'][competence.competenceid] = competence.name;
+            });
+            procedureDict[obj.procedureid] = procedureInfo;
+        });
+
+        sessionStorage.setItem('procedureDict', JSON.stringify(procedureDict));
     })
-}
+    .fail(function() {
+        fireAlertError('Error in loading procedures!');
+    });
 
-function activityInfoFailure(data) {
-    if (data.status == 401) {
-        alert('The session has expired, you need to login again!');
-        logoutUser();
+$('#activity-procedure-modal').on('hide.bs.modal', function(e) {
+    $('#activity-procedure-competences').html('');
+});
+
+/* ------------------GET SITES--------------------
+-----in order to show them in the activity form-------*/
+var options = {
+    url: API_END_POINT + '/sites',
+    type: 'GET',
+    async: false,
+    headers: {
+        'Authorization': localStorage.getItem('token'),
+        'Content-Type': 'application/json'
+    },
+    statusCode: {
+        401: function() {
+            fireAlertError('The session has expired, you need to login again!', logout);
+        }
     }
-    alert("ERROR!");
-    window.location.assign('activities_list.php');
-}
+};
 
-function activityDetailSuccess(data) {
-    data.area = 'Area1';
-    data.typology = 'Typology1';
-    data.estimated = 90;
-    var competences = ['soft skills', 'hard skills', 'knowledge of the machinery', 'ability to read technical diagrams', 'speed of intervention'];
+$.ajax(options)
+    .done(function(data) {
+        var select = $('#site');
+        var material_row = $('#activity-site-row').html();
 
-    $.each(data, function(k, v) {
-        $("#detail-" + k).html(v)
+        $.each(data, function(index, obj) {
+            let row = material_row;
+            row = row.replace(/{siteid}/ig, obj.siteid);
+            row = row.replace(/{site}/ig, obj.area + ' - ' + obj.department);
+            select.append(row);
+        });
     })
+    .fail(function() {
+        fireAlertError('Error in loading sites!');
+    });
 
-    $.each(competences, function(index, value) {
-        $('#detail-competences').append('<li class="list-group-item">' + value + '</li>');
-    })
-    $('#detail-button-edit').attr('onclick', 'window.location.assign("activities_management.php?update=true&id=' + data.activityid + '")');
-    if (data.assignedto == null)
-        $('#detail-button-assign').attr('onclick', 'window.location.assign("activities_assignment.php?id=' + data.activityid + '&estimatedtime=' + data.estimated + '&skills[]=' + competences + '")').html('<i class="fas fa-handshake"></i>').addClass('btn-success').removeClass('btn-danger');
-    else
-        $('#detail-button-assign').attr('onclick', 'unassignActivity("' + data.activityid + '")').html('Unassign').addClass('btn-danger').removeClass('btn-success');
-}
-
-function activityDetailFailure(data) {
-    if (data.status == 401) {
-        alert('The session has expired, you need to login again!');
-        logoutUser();
+/* ------------GET ACTIVITY TYPOLOGIES----------------
+-----in order to show them in the activity form-------*/
+var options = {
+    url: API_END_POINT + '/activitytypologies',
+    type: 'GET',
+    async: false,
+    headers: {
+        'Authorization': localStorage.getItem('token'),
+        'Content-Type': 'application/json'
+    },
+    statusCode: {
+        401: function() {
+            fireAlertError('The session has expired, you need to login again!', logout);
+        }
     }
-    alert("ERROR!");
-    window.location.assign('activities_list.php');
+};
+
+$.ajax(options)
+    .done(function(data) {
+        var select = $('#typology');
+        var material_row = $('#activity-typology-row').html();
+
+        $.each(data, function(index, obj) {
+            let row = material_row;
+            row = row.replace(/{typologyid}/ig, obj.typologyid);
+            row = row.replace(/{typology}/ig, obj.description);
+            select.append(row);
+        });
+    })
+    .fail(function() {
+        fireAlertError('Error in loading typologies!');
+    });
+
+/* ------------------MANAGE THE WEEK------------------------
+-----in order to show it correctly in the activity form-----*/
+var weekNumber = getWeekInterval(currentDate());
+$('#current-week').html(weekNumber);
+$('#scheduledweek').val(weekNumber);
+activityWeekFromTo(weekNumber);
+
+/* ------------------MANAGE THE DATE------------------------
+-----in order to show it correctly in the activity form-----*/
+var today = new Date();
+var dd = String(today.getDate()).padStart(2, '0');
+var mm = String(today.getMonth() + 1).padStart(2, '0');
+var yyyy = today.getFullYear();
+
+today = yyyy + '-' + mm + '-' + dd;
+
+var date = $('#scheduledweek');
+date.attr('min', getWeekInterval(today));
+date.attr('value', getWeekInterval(today));
+
+var url = new URL(window.location.href);
+var update = url.searchParams.get("update");
+var id = url.searchParams.get("id");
+
+/* --------------REFILL THE ACTIVIY FORM-----------------
+---in order to show the info and allow the modification---*/
+if (update == 'true') {
+
+    var options = {
+        url: API_END_POINT + '/activities/' + id,
+        type: 'GET',
+        headers: {
+            'Authorization': localStorage.getItem('token'),
+            'Content-Type': 'application/json'
+        },
+        statusCode: {
+            401: function() {
+                fireAlertError('The session has expired, you need to login again!', logout);
+            },
+            400: function() {
+                fireAlertError('Error in loading activity info');
+            }
+        }
+    };
+
+    $.ajax(options)
+        .done(function(data) {
+            var select = $('.filter-option-inner-inner').html('').css('color', 'black');
+
+            $.each(data.materials, function(index, obj) {
+                let name = $('#' + obj).html();
+                $('#' + obj).attr('selected', true);
+                select.append(name + ', ')
+            });
+            delete data.materials;
+
+            var interruptible = $('#interruptible');
+            interruptible[0].selectedIndex = $('#' + data.interruptible).index();
+            delete data.interruptible;
+
+            var procedure = $('#procedure');
+            procedure[0].selectedIndex = $('#' + data.procedure).index();
+            delete data.procedure;
+
+            var site = $('#site');
+            site[0].selectedIndex = $('#' + data.site).index();
+            delete data.site;
+
+            var typology = $('#typology');
+            typology[0].selectedIndex = $('#' + data.typology).index();
+            delete data.typology;
+
+            $.each(data, function(k, v) {
+                $("#" + k).val(v)
+            })
+        })
+        .fail(function() {
+            fireAlertError('Server error. Retry later!', function() {
+                window.location.assign('index.html');
+            });
+        });
+
+    $('#activityid').attr('readonly', true);
+    $('.card-header span[class="h2"]').html('Update Activity');
+    $('#send-update-button').attr('onclick', 'activityUpdate()').html('Update');
 }

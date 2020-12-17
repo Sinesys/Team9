@@ -15,7 +15,7 @@
                                 <div>{skill}</div>
                                 <div class="custom-control custom-checkbox">
                                     <input type="checkbox" class="custom-control-input skill-checkbox"
-                                        name="{skill}">
+                                        name="{skillid}">
                                     <label class="custom-control-label"></label>
                                 </div>
                             </div>
@@ -31,19 +31,37 @@
 <script type="text/javascript">
     $('#skill-info').on('show.bs.modal', function(e) {
         var button = e.relatedTarget;
-        var maintainer_id = button.getAttribute('rel');
+        var maintainer_id = button.getAttribute('name');
 
         var options = {
             url: API_END_POINT + '/maintainers/' + maintainer_id,
             type: 'GET',
             headers: {
-                'Authorization': localStorage.getItem('token')
+                'Authorization': localStorage.getItem('token'),
+                'Content-Type': 'application/json'
+            },
+            statusCode: {
+                401: function() {
+                    fireAlertError('The session has expired, you need to login again!', logout);
+                }
             }
-        }
-        var url = new URL(window.location.href);
-        var skills = url.searchParams.get("skills[]").split(",");
+        };
 
-        $.ajax(options).done(skillsSatisfiedSuccess).fail(skillsSatisfiedFailure);
+        $.ajax(options)
+            .done(function(data) {
+                var url = new URL(window.location.href);
+                var skills = JSON.parse(sessionStorage.getItem('competences')).ids;
+                var skills_satisfied = data.competences.filter(x => skills.includes(x.competence));
+
+                $.each(skills_satisfied, function(index, obj) {
+                    $('input[name="' + obj.competence + '"]').prop('checked', true);
+                });
+            })
+            .fail(function() {
+                fireAlertError('Impossible to load skills!', function() {
+                    window.location.assign('activities_assignment.php');
+                });
+            });
 
     });
 

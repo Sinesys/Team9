@@ -17,8 +17,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
 
+    <!-- SWEET ALERT -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@10"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-bootstrap-4@4.0.1/bootstrap-4.min.css">
+
     <!-- FONT AWESOME ICONS -->
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.0/css/all.css" integrity="sha384-lZN37f5QGtY3VHgisS14W3ExzMWZxybE1SJSEsQp9S+oqd12jhcu+A56Ebc1zFSJ" crossorigin="anonymous">
+
+    <!-- CUSTOM JS -->
+    <script src="static/js/utilities.js"></script>
 
 </head>
 
@@ -27,12 +34,26 @@
         <div class="container w-50 px-5">
             <div class="alert alert-danger p-5" role="alert">
                 <h1 class="alert-heading"><i class="fas fa-exclamation-triangle"></i> Attention!</h1>
-                <p class="h6">You are not enabled to view this page.</p>
+                <p class="h6" id="error-title"></p>
                 <hr>
-                <p class="mb-0">If you want to see this content please <a style="text-decoration: none;" href="index.html">Login</a></p>
+                <p class="mb-0" id="error-subtitle"></p>
             </div>
         </div>
     </div>
 </body>
 
 </html>
+
+<script type="text/javascript">
+    var title = $('#error-title');
+    var subtitle = $('#error-subtitle');
+    var role = localStorage.getItem('role');
+
+    if (localStorage.getItem('token') === null) {
+        title.html('You must be logged in to view this page.');
+        subtitle.html('Click <a style="text-decoration: none;" href="index.html">here</a> to login.');
+    } else {
+        title.html('You don\'t have the right permissions to view this page.');
+        subtitle.html('Click <a style="text-decoration: none;" href="' + retrievePage(role) + '">here</a> to return to your homepage.');
+    }
+</script>

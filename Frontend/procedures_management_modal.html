@@ -1,0 +1,167 @@
+<div class="modal fade" id="procedures-modal">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h4 class="modal-title" id="procedure-modal-title"></h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="procedure-form">
+
+                    <label for="procedureid">ID:</label>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fab fa-slack-hash"></i></span>
+                        </div>
+                        <input type="text" class="form-control" placeholder="Insert univoc ID" id="procedureid" name="procedureid" maxlength="20">
+                    </div>
+
+                    <label for="description">Description:</label>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-clipboard-list"></i></span>
+                        </div>
+                        <input type="text" class="form-control" placeholder="Insert description" id="description" name="description" maxlength="50">
+                    </div>
+
+                    <label for="procedure-competences">Competences: </label>
+                    <div class="input-group mb-3" id="procedure-competences" style="max-height:25vh; overflow-y: auto;"></div>
+                    <div class="custom-file" id="input-file">
+                        <input type="file" class="custom-file-input" id="smpFile" accept="application/pdf">
+                        <label class="custom-file-label" for="smpFile">Choose SMP file</label>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" id="procedure-insert-update" class="btn btn-primary" data-dismiss="modal">Insert</button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<template id="procedure-competence-row">
+    <div class="custom-control custom-checkbox mb-3 mr-4">
+        <input type="checkbox" class="custom-control-input" id="procedure-competence{index}" name="procedure-competence{index}" value="{procedure-competence-id}">
+        <label class="custom-control-label" for="procedure-competence{index}">{procedure-competence}</label>
+    </div>
+</template>
+
+<script type="text/javascript ">
+    $(".custom-file-input ").on("change ", function() {
+        var fileName = $(this).val().split("\\ ").pop();
+        $(this).siblings(".custom-file-label ").addClass("selected ").html(fileName);
+    });
+
+    var options = {
+        url: API_END_POINT + '/competences',
+        type: 'GET',
+        headers: {
+            'Authorization': localStorage.getItem('token'),
+            'Content-Type': 'application/json'
+        },
+        async: false,
+        statusCode: {
+            401: function() {
+                fireAlertError('The session has expired, you need to login again!', logout);
+            }
+        }
+    };
+
+    $.ajax(options)
+        .done(function(data) {
+            var competences = $('#procedure-competences');
+            var competence_row = $("#procedure-competence-row").html();
+
+            $.each(data, function(index, obj) {
+                let row = competence_row;
+                row = row.replace(/{index}/ig, index);
+                row = row.replace(/{procedure-competence}/ig, obj.name);
+                row = row.replace(/{procedure-competence-id}/ig, obj.competenceid);
+                competences.append(row);
+            });
+        })
+        .fail(function() {
+            fireAlertError('Impossibile to show competences!');
+        });
+
+
+    $('#procedures-modal').on('show.bs.modal', function(e) {
+
+        var button = e.relatedTarget;
+        var procedureid = button.getAttribute('name');
+        var action = button.getAttribute('id').split('-')[0];
+        $('input[id="procedureid "]').attr('disabled', false);
+        $('#procedure-modal-title').html('Insert procedure');
+        $('#procedure-insert-update').html('Insert').attr('onclick', 'procedureInsert()');
+
+
+        if (action == 'modify') {
+            $('input[id="procedureid "]').attr('disabled', true);
+            $('#procedure-modal-title').html('Update procedure');
+            $('#procedure-insert-update').html('Update').attr('onclick', 'procedureUpdate()');
+
+            var options = {
+                url: API_END_POINT + '/procedures/' + procedureid,
+                type: 'GET',
+                headers: {
+                    'Authorization': localStorage.getItem('token'),
+                    'Content-Type': 'application/json'
+                },
+                statusCode: {
+                    401: function() {
+                        fireAlertError('The session has expired, you need to login again!', logout);
+                    }
+                }
+            };
+
+            $.ajax(options)
+                .done(function(data) {
+                    $.each(data.competencesrequired, function(index, value) {
+                        $('input[type=checkbox][value=' + value + ']').prop('checked', true);
+                    });
+                    delete data.competencesrequired;
+                    $.each(data, function(key, value) {
+                        $('input[id="' + key + '"]').val(value);
+                    });
+
+                    if (data.smpfile)
+                        $('#input-file').html('<button class="btn btn-danger" onclick="smpFileDelete(\'' + data.procedureid + '\')">Delete SMP</button>');
+                    else
+                        $('#input-file').html(`<input type="file" class="custom-file-input" id="smpFile" accept="application/pdf">
+                                            <label class="custom-file-label" for="smpFile">Choose SMP file</label>`);
+
+                    $(".custom-file-input").on("change", function() {
+                        var fileName = $(this).val().split("\\").pop();
+                        $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+                    });
+                })
+                .fail(function() {
+                    fireAlertError('Error in loading site info!', function() {
+                        window.location.assign('sites_list.php');
+                    });
+                });
+
+            $(".custom-file-input").on("change", function() {
+                var fileName = $(this).val().split("\\").pop();
+                $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+            });
+        }
+
+    });
+
+    $('#procedures-modal').on('hide.bs.modal', function(e) {
+        $('#procedure-competences input[type=checkbox]:checked').each(function(index, obj) {
+            obj.checked = false;
+        })
+        $('#procedure-form input:not([type=checkbox])').each(function() {
+            $(this).val('');
+        });
+    });
+</script>

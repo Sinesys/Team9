@@ -1,0 +1,12 @@
+DROP ROLE IF EXISTS se_user;
+
+CREATE ROLE se_user WITH
+	LOGIN
+	NOSUPERUSER
+	NOCREATEDB
+	NOCREATEROLE
+	INHERIT
+	NOREPLICATION
+	CONNECTION LIMIT -1
+	PASSWORD 'team9user';
+COMMENT ON ROLE se_user IS 'Ruolo rappresentante i generici utenti del sistema.';

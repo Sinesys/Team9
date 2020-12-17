@@ -1,0 +1,89 @@
+<div class="modal fade" id="typologies-modal">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h4 class="modal-title" id="typology-modal-title">Add new typology</h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+
+                <div id="typology-form">
+
+                    <label for="typologyid">ID:</label>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fab fa-slack-hash"></i></span>
+                        </div>
+                        <input type="text" class="form-control" placeholder="Insert univoc ID" id="typologyid" name="typologyid" maxlength="20">
+                    </div>
+
+                    <label for="description">Typology:</label>
+                    <div class="input-group mb-3">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-plug"></i></span>
+                        </div>
+                        <input type="text" class="form-control" placeholder="Insert typology" id="description" name="description" maxlength="50">
+                    </div>
+
+                </div>
+
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="typology-insert-update" data-dismiss="modal"></button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script type="text/javascript">
+    $('#typologies-modal').on('show.bs.modal', function(e) {
+        var button = e.relatedTarget;
+        var typologyid = button.getAttribute('name');
+        var action = button.getAttribute('id').split('-')[0];
+        $('input[id="typologyid"]').attr('disabled', false);
+        $('#typology-modal-title').html('Insert typology');
+        $('#typology-insert-update').html('Insert').attr('onclick', 'typologyInsert()');
+
+
+        if (action == 'modify') {
+            $('input[id="typologyid"]').attr('disabled', true);
+            $('#typology-modal-title').html('Update typology');
+            $('#typology-insert-update').html('Update').attr('onclick', 'typologyUpdate()');
+
+            var options = {
+                url: API_END_POINT + '/activitytypologies/' + typologyid,
+                type: 'GET',
+                headers: {
+                    'Authorization': localStorage.getItem('token'),
+                    'Content-Type': 'application/json'
+                },
+                statusCode: {
+                    401: function() {
+                        fireAlertError('The session has expired, you need to login again!', logout);
+                    }
+                }
+            };
+
+
+            $.ajax(options).done(function(data) {
+                $.each(data, function(key, value) {
+                    $('input[id="' + key + '"]').val(value);
+                });
+            }).fail(function() {
+                fireAlertError('Error in loading typology info!', function() {
+                    window.location.assign('typologies_list.php');
+                });
+            });
+        }
+    })
+
+    $('#typologies-modal').on('hide.bs.modal', function(e) {
+        $('#typology-form input').each(function() {
+            $(this).val('');
+        });
+    })
+</script>

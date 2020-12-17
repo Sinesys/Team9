@@ -5,7 +5,7 @@
             <div class="modal-header d-flex justify-content-between bg-light">
                 <h4 class="modal-title"><span id="detail-activityid"></span></h4>
                 <div>
-                    <span class="modal-title h4">Week <span id="detail-week"></span></span>
+                    <span class="modal-title h4">Week <span id="detail-scheduledweek"></span></span>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
             </div>
@@ -13,12 +13,12 @@
             <div class="modal-body">
                 <div class="row px-3">
                     <div class="col">
-                        <div class="row"><strong>Area</strong></div>
-                        <div class="row"><span id="detail-area"></span></div>
+                        <div class="row"><strong>Site</strong></div>
+                        <div class="row"><span id="detail-site"></span></div>
                     </div>
                     <div class="col">
                         <div class="row"><strong class="mx-auto">Estimated intervention time</strong></div>
-                        <div class="row"><span class="ml-auto" id="detail-estimated"></span><span class="mr-auto">&nbsp;min.<span></div>
+                        <div class="row"><span class="ml-auto" id="detail-estimatedtime"></span><span class="mr-auto">&nbsp;min.<span></div>
                     </div>
                     <div class="col">
                         <div class="row"><strong class="ml-auto">Typology</strong></div>
@@ -30,23 +30,29 @@
                 <div class="row d-flex justify-content-between">
                     <div class="col form-group">
                         <label for="detail-description"><strong>Activity description</strong></label>
-                        <textarea class="form-control" id="detail-description" rows="3" readonly style="height: 25vh; resize:none; background-color:white;"></textarea>
+                        <textarea class="form-control" id="detail-description" rows="3" readonly style="height: 20vh; resize:none; background-color:white;"></textarea>
                     </div>
                     <div class="col form-group">
                         <label for="detail-competences"><strong>Skills needed</strong></label>
-                        <ul class="list-group list-group-flush" id="detail-competences" style="max-height: 25vh; overflow-y: scroll;"></ul>
+                        <ul class="list-group list-group-flush" id="detail-competences" style="max-height: 20vh; overflow-y: scroll;"></ul>
                     </div>
                 </div>
                 <hr>
-                <div class="form-group">
-                    <label for="detail-workspacenotes"><strong>Workspace Notes</strong></label>
-                    <textarea class="form-control" id="detail-workspacenotes" rows="3" style="resize:none"></textarea>
+                <div class="row d-flex justify-content-between">
+                    <div class="col form-group">
+                        <label for="detail-workspacenotes"><strong>Workspace Notes</strong></label>
+                        <textarea class="form-control" id="detail-workspacenotes" rows="3" style="height: 15vh; resize:none;"></textarea>
+                    </div>
+                    <div class="col form-group">
+                        <label for="detail-materials"><strong>Materials</strong></label>
+                        <ul class="list-group list-group-flush" id="detail-materials" style="max-height: 15vh; overflow-y: scroll;"></ul>
+                    </div>
                 </div>
             </div>
 
             <div class="modal-footer d-flex justify-content-between">
                 <div>
-                    <button class="btn btn-danger btn-lg" title="SMP PDF"><i class="far fa-file-pdf"></i></button>
+                    <button class="btn btn-danger btn-lg" title="SMP PDF" id="detail-button-smpFile"><i class="far fa-file-pdf"></i></button>
                 </div>
                 <div>
                     <button class="btn btn-primary btn-lg" title="Edit" id="detail-button-edit"><i class="fas fa-edit"></i></button>
@@ -61,20 +67,64 @@
 <script type="text/javascript">
     $('#activity-info').on('show.bs.modal', function(e) {
         var button = e.relatedTarget;
-        var activity = button.getAttribute('rel');
-        var week = button.parentElement.parentElement.getAttribute('rel');
+        var activity = button.getAttribute('name');
+        var week = button.parentElement.parentElement.getAttribute('name');
 
         $('#detail-week').html(week)
 
         var options = {
-            url: API_END_POINT + '/activities/' + activity,
+            url: API_END_POINT + '/activities/' + activity + '?verbose=true',
             type: 'GET',
             headers: {
-                'Authorization': localStorage.getItem('token')
+                'Authorization': localStorage.getItem('token'),
+                'Content-Type': 'application/json'
+            },
+            statusCode: {
+                401: function() {
+                    fireAlertError('The session has expired, you need to login again!', logout);
+                },
+                400: function() {
+                    fireAlertError('Error in loading activity details', function() {
+                        window.location.assign('activities_list.php');
+                    });
+                }
             }
-        }
+        };
 
-        $.ajax(options).done(activityDetailSuccess).fail(activityDetailFailure);
+        $.ajax(options)
+            .done(function(data) {
+                $.each(data.materials, function(key, value) {
+                    $('#detail-materials').append('<li class="list-group-item">' + value.name + '</li>');
+                });
+                delete data.materials
+
+                $('#detail-typology').html(data.typology.description);
+                delete data.typology;
+
+                $('#detail-site').html(data.site.area + ' - ' + data.site.department);
+                delete data.site;
+
+                $.each(data, function(k, v) {
+                    $("#detail-" + k).html(v)
+                })
+
+                var procedureDict = JSON.parse(sessionStorage.getItem('procedureDict'));
+                $.each(procedureDict[data.procedure.procedureid].competencesrequired, function(key, value) {
+                        $('#detail-competences').append('<li class="list-group-item">' + value + '</li>');
+                    })
+                    ///procedures/P1/SMP
+                $('#detail-button-smpFile').attr('onclick', 'getSmpFile(\'' + data.procedure.procedureid + '\')')
+                $('#detail-button-edit').attr('onclick', 'window.location.assign("activities_management.php?update=true&id=' + data.activityid + '")');
+                if (data.assignedto == null)
+                    $('#detail-button-assign').attr('onclick', 'window.location.assign("activities_assignment.php?id=' + data.activityid + '")').html('<i class="fas fa-handshake"></i>').addClass('btn-success').removeClass('btn-danger');
+                else
+                    $('#detail-button-assign').attr('onclick', 'activityUnassignment("' + data.activityid + '")').html('Unassign').addClass('btn-danger').removeClass('btn-success');
+            })
+            .fail(function() {
+                fireAlertError('Server error. Retry later!', function() {
+                    window.location.assign('index.html');
+                });
+            });
     });
 
     $('#activity-info').on('hide.bs.modal', function(e) {

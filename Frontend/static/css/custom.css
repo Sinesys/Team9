@@ -36,6 +36,24 @@
     background-position: 20px 30px;
 }
 
+.clickable-cell {
+    transition: background-color 0.3s, color 0.3s;
+}
+
+.clickable-cell:hover {
+    background-color: #007BFF !important;
+}
+
+.clickable-cell:hover a {
+    color: white;
+}
+
+.clickable-cell a {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+
 
 /* ---------- SCROLLBAR ---------- */
 

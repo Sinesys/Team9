@@ -1,0 +1,40 @@
+<div class="modal fade" id="activity-procedure-modal">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h4 class="modal-title" id="activity-procedure-modal-title"></h4>
+                <button type="button" class="close" data-dismiss="modal">&times;</button>
+            </div>
+
+            <div class="modal-body">
+
+                <label for="procedureid">ID:</label>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fab fa-slack-hash"></i></span>
+                    </div>
+                    <input type="text" class="form-control" id="activity-procedure-procedureid" name="activity-procedure-procedureid" disabled>
+                </div>
+
+                <label for="description">Description:</label>
+                <div class="input-group mb-3">
+                    <div class="input-group-prepend">
+                        <span class="input-group-text"><i class="fas fa-clipboard-list"></i></span>
+                    </div>
+                    <input type="text" class="form-control" id="activity-procedure-description" name="activity-procedure-description" disabled>
+                </div>
+
+                <label for="procedure-competences">Competences: </label>
+                <div class="input-group mb-3" id="activity-procedure-competences" style="max-height:25vh; overflow-y: auto;"></div>
+                <template id="activity-procedure-competence-row">
+                <div class="custom-control custom-checkbox mb-3 mr-4">
+                    <input type="checkbox" class="custom-control-input" id="activity-procedure-competence{index}" name="activity-procedure-competence{index}" value="{procedure-competence-id}" checked disabled>
+                    <label class="custom-control-label" for="activity-procedure-competence{index}">{activity-procedure-competence}</label>
+                </div>
+            </template>
+            </div>
+
+        </div>
+    </div>
+</div>
